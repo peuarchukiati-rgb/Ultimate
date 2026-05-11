@@ -96,9 +96,19 @@ Voice must follow UltimateEngine.md above. Output only the message text."""
         contents=user_msg,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
-            max_output_tokens=1500,
+            max_output_tokens=3000,
             temperature=0.7,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         ),
     )
+
+    # Surface truncation if it still happens — log finish_reason + usage
+    finish_reason = None
+    if response.candidates:
+        finish_reason = getattr(response.candidates[0], "finish_reason", None)
+    if finish_reason and str(finish_reason) not in ("FinishReason.STOP", "STOP", "1"):
+        print(f"[warn] gemini finish_reason={finish_reason} (output may be truncated)")
+    if hasattr(response, "usage_metadata") and response.usage_metadata:
+        print(f"[info] gemini usage: {response.usage_metadata}")
 
     return response.text.strip()
