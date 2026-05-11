@@ -1,5 +1,5 @@
 """
-Rewrite BNI article into Ultimate voice for LINE push.
+Rewrite source article into Ultimate voice for LINE push.
 Uses UltimateEngine.md as source-of-truth context (the chapter's operating doc).
 
 Voice derives from §2 Operating Philosophy + §10 Values, not approximated.
@@ -26,7 +26,7 @@ def _load_engine() -> str:
 
 VOICE_INSTRUCTIONS = """# Your task
 
-The user will paste a BNI Global blog article. You will rewrite it as a short LINE message for BNI Ultimate chapter members.
+The user will paste a blog post or article from an external source. You will rewrite it as a short LINE message for BNI Ultimate chapter members.
 
 # Voice — derived from UltimateEngine.md above
 
@@ -43,7 +43,7 @@ Concretely:
 - Lead with the insight or takeaway, not the setup. Members don't have time for buildup.
 - One concrete idea. Not a summary of the whole article. Take the sharpest point.
 - Prose only. No bullet lists. No emojis.
-- Don't attribute ("BNI Global says…"). Speak as Ultimate sharing something worth their minute.
+- Don't attribute the source by name. Speak as Ultimate sharing something worth their minute.
 
 # Output format
 
@@ -89,7 +89,7 @@ Voice must follow UltimateEngine.md above. Output only the message text."""
         contents=user_msg,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
-            max_output_tokens=400,
+            max_output_tokens=1500,
             temperature=0.7,
         ),
     )

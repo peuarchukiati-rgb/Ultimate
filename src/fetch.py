@@ -1,5 +1,5 @@
 """
-Fetch new articles from bni.com RSS feed.
+Fetch new articles from source RSS feed.
 Returns list of dicts: {guid, title, link, summary, published, content}
 """
 import re
@@ -7,7 +7,7 @@ from typing import Iterable
 
 import feedparser
 
-FEED_URL = "https://www.bni.com/feed/"
+FEED_URL = "https://seths.blog/feed/"
 
 
 def _strip_html(html: str) -> str:
