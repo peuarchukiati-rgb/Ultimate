@@ -7,33 +7,23 @@ jobs:
   debug:
     runs-on: ubuntu-latest
     steps:
-      - name: Inspect token shape
+      - name: Inspect both secrets
         env:
-          T: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_T: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          GEMINI_K: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python3 -c "
           import os
-          from collections import Counter
-          t = os.environ.get('T', '')
-          print(f'len: {len(t)}')
-          print(f'has_newline_LF: {chr(10) in t}')
-          print(f'has_CR: {chr(13) in t}')
-          print(f'has_null: {chr(0) in t}')
-          print(f'is_ascii: {t.isascii()}')
-          types = Counter()
-          for c in t:
-              if c.isalnum(): types['alnum'] += 1
-              elif c in '/+=': types['base64_special'] += 1
-              elif c == chr(10): types['LF'] += 1
-              elif c == chr(13): types['CR'] += 1
-              elif c == ' ': types['space'] += 1
-              elif c.isspace(): types['other_whitespace'] += 1
-              else: types['other'] += 1
-          print(f'distribution: {dict(types)}')
-          # Show byte values around any whitespace
-          for i, c in enumerate(t):
-              if c.isspace() or not c.isascii():
-                  print(f'  idx {i}: byte=0x{ord(c):02x} ({repr(c)})')
-                  if i > 0: print(f'    prev: byte=0x{ord(t[i-1]):02x} ({repr(t[i-1])})')
-                  if i+1 < len(t): print(f'    next: byte=0x{ord(t[i+1]):02x} ({repr(t[i+1])})')
+          for name in ('LINE_T', 'GEMINI_K'):
+              t = os.environ.get(name, '')
+              print(f'=== {name} ===')
+              print(f'  len: {len(t)}')
+              print(f'  has_LF: {chr(10) in t}')
+              print(f'  has_CR: {chr(13) in t}')
+              print(f'  is_ascii: {t.isascii()}')
+              ws = [(i, ord(c)) for i, c in enumerate(t) if c.isspace() or not c.isascii()]
+              if ws:
+                  print(f'  whitespace/non-ascii positions: {ws[:10]}')
+              else:
+                  print(f'  no whitespace or non-ascii')
           "
