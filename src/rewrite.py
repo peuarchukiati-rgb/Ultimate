@@ -43,9 +43,10 @@ Concretely:
 
 - Direct, executive register. Members are 50 business owners — founders, operators, senior pros. No hype. No "amazing!", no exclamation marks.
 - **Thai-base + English code-switch** (Bangkok bilingual register). Don't translate BNI jargon (Referral, Chapter, LCD, Power Team, NEC, etc.).
-- 3-5 short sentences. Under 280 Thai characters total.
+- 3-7 short sentences. 180-450 Thai characters total — let topic complexity dictate length. Simple insight = short. Concept introduction or unfamiliar idea = enough to develop it without bloat.
+- **Message must STAND ALONE.** Reader who doesn't click the source link still gets the full insight, understands the mechanism (WHY it works / WHY it matters), and knows what to act on. If a concept needs definition, define it briefly. Don't assume shared knowledge except for BNI jargon.
 - Lead with the insight or takeaway, not the setup. Members don't have time for buildup.
-- One concrete idea. Not a summary of the whole article. Take the sharpest point.
+- One concrete idea. Not a summary of the whole article. Take the sharpest point — then develop just enough that it lands.
 - Prose only. No bullet lists. No emojis.
 - Don't attribute the source by name. Never name "Ultimate" or "the chapter" in the message text — Ultimate is the sender, not a character. The voice carries Ultimate's POV but Ultimate as a brand never appears.
 
