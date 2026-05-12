@@ -1,5 +1,5 @@
 """
-Fetch new articles from source RSS feed.
+Fetch new articles from source RSS feeds.
 Returns list of dicts: {guid, title, link, summary, published, content}
 """
 import random
@@ -7,7 +7,15 @@ import re
 
 import feedparser
 
-FEED_URL = "https://seths.blog/feed/"
+# Multiple sources rotated randomly for variety. All English-language insight
+# blogs with reliable RSS, comparable article length, and audience-fit for
+# Thai SME founders. To rotate the set, edit this list — fetch_new_articles
+# treats them as one pool and picks the next unseen article at random.
+FEEDS = [
+    "https://seths.blog/feed/",
+    "https://jamesclear.com/feed",
+    "https://fs.blog/feed/",
+]
 
 
 def _strip_html(html: str) -> str:
@@ -34,21 +42,35 @@ def _entry_to_article(entry) -> dict | None:
     }
 
 
+def _fetch_all_entries() -> list:
+    """Pull every configured feed, return combined entry list.
+
+    Skips feeds that fail to parse — one bad feed doesn't break the run.
+    """
+    combined = []
+    for feed_url in FEEDS:
+        feed = feedparser.parse(feed_url)
+        if not feed.entries:
+            if feed.bozo:
+                print(f"[warn] feed parse failed for {feed_url}: {feed.bozo_exception}")
+            continue
+        combined.extend(feed.entries)
+    return combined
+
+
 def fetch_new_articles(seen: set[str], limit: int = 1) -> list[dict]:
     """
-    Pull RSS feed, return up-to-limit articles not in seen set.
-    Newest first.
+    Random pick across all configured feeds. Returns up-to-limit articles
+    not in seen set.
     """
-    feed = feedparser.parse(FEED_URL)
+    entries = _fetch_all_entries()
+    if not entries:
+        return []
 
-    # Only fail if no entries AND bozo error — minor parse warnings are common
-    if not feed.entries:
-        if feed.bozo:
-            raise RuntimeError(f"feed parse failed: {feed.bozo_exception}")
-        # Empty feed (no new posts) is valid — return empty list below
+    random.shuffle(entries)
 
     new = []
-    for entry in feed.entries:
+    for entry in entries:
         guid = entry.get("id") or entry.get("link")
         if not guid or guid in seen:
             continue
@@ -57,19 +79,15 @@ def fetch_new_articles(seen: set[str], limit: int = 1) -> list[dict]:
             new.append(article)
         if len(new) >= limit:
             break
-
     return new
 
 
 def fetch_fallback_article() -> dict | None:
     """
-    Pull RSS feed and return one random article regardless of seen status.
-    Used when no NEW articles exist — keeps hourly cron visible in LINE so we
-    can verify schedule reliability. Picks at random for variety across runs.
+    Random article from any configured feed regardless of seen status.
+    Used when no NEW articles exist — keeps hourly cron visible in LINE.
     """
-    feed = feedparser.parse(FEED_URL)
-    if not feed.entries:
-        if feed.bozo:
-            raise RuntimeError(f"feed parse failed: {feed.bozo_exception}")
+    entries = _fetch_all_entries()
+    if not entries:
         return None
-    return _entry_to_article(random.choice(feed.entries))
+    return _entry_to_article(random.choice(entries))
