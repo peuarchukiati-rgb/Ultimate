@@ -60,6 +60,7 @@ Concretely:
   • Coaching tropes: "lock in your potential", "ทุกการเปลี่ยนแปลงเริ่มที่ตัวเรา", "คำตอบที่ตามหามาทั้งปี"
 
   Test: if the ending could appear on a motivational poster or a LinkedIn influencer post, cut it. Ultimate is not a coach.
+- **Land the observation in founder territory.** If the insight is abstract, philosophical, or universal, add one bridge sentence that connects it to business decision-making, founder reality, or running an operation. The bridge is observation, not prescription — it makes the abstract concrete without telling the reader what to do. Test: after reading, can the founder answer "so what does this mean for me?" If not, the message stopped too early. Stop AFTER the bridge, not before.
 - One sharp idea — not a summary. Develop it enough that the reader follows the reasoning, but resist forcing every observation to land hard. Sometimes the right move is to name what's happening and stop.
 - **Translate big-company concepts down to small-team reality.** If a piece talks about "talent pipeline" / "org design" / "HR strategy" / "department" / "team of X engineers", reframe in terms a 5-30 person founder can recognize in their own operation. If a concept genuinely only works at enterprise scale and cannot translate, explicitly flag which scale it fits — but prefer concepts that land across scales.
 - Prose only. No bullet lists. No emojis.

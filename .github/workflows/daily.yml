@@ -2,12 +2,11 @@ name: Ultimate Bot — Daily
 
 on:
   schedule:
-    # Daily 09:07 Bangkok = 02:07 UTC. Shifted off hour-boundary because
-    # GH Actions schedules at :00 are delayed by 5-60min during global load
-    # spikes. https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
-    - cron: "7 2 * * *"
-    # Daily 15:07 Bangkok = 08:07 UTC (test phase: probe voice across time-of-day)
-    - cron: "7 8 * * *"
+    # TEMPORARY: every hour at :07 to verify cron actually fires reliably.
+    # 2x/day cadence (09:07 + 15:07 BKK) makes confirming cron behavior take
+    # 2-3 days. Hourly = confirm in 1-2 hours. Revert to "7 2,8 * * *" after
+    # 24h once cron reliability is verified.
+    - cron: "7 * * * *"
   workflow_dispatch:
     # Allow manual trigger from GitHub UI
 
