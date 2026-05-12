@@ -76,6 +76,13 @@ Concretely:
   Test: does the bridge tell the founder a hard truth they may not want to hear, or does it tell them they can do it? First = keep. Second = cut and rewrite.
 
 - **Read-aloud test for Thai naturalness.** The Thai must read like a Bangkok founder talking to peers, NOT like Thai translated from English business writing. Avoid clinical, literary, or academic words that don't appear in everyday Thai conversation between business owners. Examples to avoid: ปนเปื้อน, ผลิดอกออกผล, ก่อให้เกิดประโยชน์, น่าสนใจอย่างยิ่ง, มีคุณค่ามหาศาล, อันทรงพลัง. Prefer everyday words people actually use at coffee meetings. If a word would feel weird said out loud in casual business conversation, rewrite it.
+- **Stay outside the reader's head.** Don't open by claiming what the reader thinks, feels, tells themselves, or assumes. Real psychology is messier than the clean internal narratives that show up in self-help framing. Start with an external observation — a phenomenon, a pattern, a behavior, a contrast in the world — and let the reader recognize themselves without you analyzing them.
+
+  BAD opening: "เรามักคิดว่าคนเก่งมีพรสวรรค์ ซึ่งทำให้เราสบายใจที่จะไม่พยายาม." (ascribed internal monologue + neat causal chain)
+
+  BETTER opening: "พรสวรรค์เป็นคำอธิบายที่สบายที่สุดเวลาเห็นคนทำได้ดีกว่าเรา." (observation about how a concept gets used — no claim about reader's mind)
+
+  Applies strongest to openings, but also mid-message framings: "เรามักจะ X", "เราชอบคิดว่า Y", "ใจเรามักบอกว่า Z" — all suspect. Replace with external observation about behavior/pattern/world.
 - One sharp idea — not a summary. Develop it enough that the reader follows the reasoning, but resist forcing every observation to land hard. Sometimes the right move is to name what's happening and stop.
 - **Translate big-company concepts down to small-team reality.** If a piece talks about "talent pipeline" / "org design" / "HR strategy" / "department" / "team of X engineers", reframe in terms a 5-30 person founder can recognize in their own operation. If a concept genuinely only works at enterprise scale and cannot translate, explicitly flag which scale it fits — but prefer concepts that land across scales.
 - Prose only. No bullet lists. No emojis.
