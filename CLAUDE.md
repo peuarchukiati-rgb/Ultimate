@@ -4,7 +4,7 @@ Project-level context for Claude Code sessions. Keep this short; the codebase is
 
 ## What this is
 
-A scheduled job that fetches one new Seth Godin post, rewrites it in the chap's voice via Gemini, and pushes to the BNI Ultimate chap LINE group. Public repo, intentionally open.
+A scheduled job that picks one new article at random from a curated set of business-insight RSS feeds (currently Seth Godin, James Clear, Farnam Street — see `FEEDS` in `src/fetch.py`), rewrites it in the chap's voice via Gemini, and pushes to the BNI Ultimate chap LINE group. Public repo, intentionally open.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ System-level docs (README.md, this file, commit messages, PR bodies) are English
 
 ## Fallback behavior
 
-When `fetch_new_articles` returns empty, `run.py` calls `fetch_fallback_article()` and pushes a random existing RSS entry **without** updating `seen.json` — so the entry stays repostable and we can observe cron firings even on days with no new Seth post. The bot is therefore not idempotent: running it twice within the same hour will push twice. This is why scheduling is single-sourced (cron-job.org only).
+When `fetch_new_articles` returns empty, `run.py` calls `fetch_fallback_article()` and pushes a random existing RSS entry (any source) **without** updating `seen.json` — so the entry stays repostable and we can observe cron firings even on days when no source has posted anything new. The bot is therefore not idempotent: running it twice within the same hour will push twice. This is why scheduling is single-sourced (cron-job.org only).
 
 ## LINE quota awareness
 
