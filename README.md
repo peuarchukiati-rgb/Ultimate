@@ -1,6 +1,6 @@
 # Ultimate Bot
 
-Daily BNI Global content → rewritten in Ultimate voice → pushed to chap LINE group.
+Daily BNI Global content → rewritten in Ultimate voice → pushed to the chap LINE group.
 
 Runs automatically every day at 9:00 AM Bangkok time via GitHub Actions.
 
@@ -8,21 +8,21 @@ Runs automatically every day at 9:00 AM Bangkok time via GitHub Actions.
 
 ## What it does
 
-1. ดึง RSS feed จาก `bni.com/feed/` (BNI Global blog ทางการ)
-2. หาบทความใหม่ที่ยังไม่เคย push (track ใน `seen.json`)
-3. ส่งให้ Gemini 2.5 Flash rewrite — โดย **อ้างอิง `UltimateEngine.md` เป็น source-of-truth** (chapter's operating doc). Voice ออกมาเป็น chapter's own voice ไม่ใช่ generic.
-4. Push เข้า LINE chap group ผ่าน Messaging API
-5. Commit `seen.json` กลับ repo (track state)
+1. Pulls the RSS feed from `bni.com/feed/` (the official BNI Global blog)
+2. Finds new articles that haven't been pushed yet (tracked in `seen.json`)
+3. Sends them to Gemini 2.5 Flash for rewriting — using **`UltimateEngine.md` as the source-of-truth** (the chapter's operating doc). The voice comes out as the chapter's own, not generic.
+4. Pushes to the chap LINE group via the Messaging API
+5. Commits `seen.json` back to the repo (state tracking)
 
-ไม่มี approval gate. ผิดลบทีหลัง.
+No approval gate. If something's wrong, delete it after the fact.
 
-> **Why UltimateEngine.md?** เป็น chapter's operating document (open by design). ทุกการ rewrite ดึง voice จาก §2 Operating Philosophy + §10 Values → consistent + authentic. ตัวไฟล์ใน repo, แก้ตามจริงได้, bot pick up อัตโนมัติทุก run.
+> **Why UltimateEngine.md?** It's the chapter's operating document (open by design). Every rewrite pulls its voice from §2 Operating Philosophy + §10 Values → consistent + authentic. The file lives in the repo, edits stick, and the bot picks them up automatically every run.
 
 ---
 
 ## Deploy (one-time setup)
 
-### 1. Push repo to GitHub
+### 1. Push the repo to GitHub
 
 ```bash
 git init
@@ -34,22 +34,22 @@ git push -u origin main
 
 ### 2. Get LINE credentials
 
-จาก [LINE Developers Console](https://developers.line.biz/console/) → channel ของ chap OA:
+From the [LINE Developers Console](https://developers.line.biz/console/) → your chap OA channel:
 
 - **Channel access token** (Messaging API tab → "Issue" long-lived token)
-- **Group ID** ของ chap LINE group ที่ OA เป็นสมาชิก
+- **Group ID** of the chap LINE group the OA belongs to
 
-> หา Group ID: เพิ่ม OA เข้า group → ส่งข้อความใน group → check webhook log หรือใช้ [LINE Webhook tester](https://developers.line.biz/console/) → จะเห็น `source.groupId`
+> Finding the Group ID: add the OA to the group → send a message in the group → check the webhook log or use the [LINE Webhook tester](https://developers.line.biz/console/) → you'll see `source.groupId`.
 
-### 3. Get Gemini API key (ฟรี ไม่ต้องบัตรเครดิต)
+### 3. Get a Gemini API key (free, no credit card)
 
 [aistudio.google.com](https://aistudio.google.com/apikey) → "Get API key" → "Create API key in new project"
 
-ฟรี 1,500 req/วัน, 1M tokens/นาที. ของเราใช้แค่ 1 req/วัน → ใต้ limit เยอะ.
+Free tier: 1,500 req/day, 1M tokens/min. We use ~1 req/day → well under the limit.
 
-> **Note:** Free tier ของ Gemini ใช้ prompt ของเราไป train model ของ Google. ของที่ส่งเป็น BNI public blog rewrite — ไม่มี member data, ไม่มี secret. OK ใช้ฟรีได้.
+> **Note:** Gemini's free tier uses your prompts to train Google's models. What we send is a rewrite of a public BNI blog post — no member data, no secrets. Free tier is fine.
 
-### 4. Add secrets to GitHub repo
+### 4. Add secrets to the GitHub repo
 
 Repo Settings → Secrets and variables → Actions → New repository secret:
 
@@ -61,40 +61,40 @@ Repo Settings → Secrets and variables → Actions → New repository secret:
 
 ### 5. Test manually
 
-GitHub repo → Actions tab → "Ultimate Bot — Daily" workflow → **Run workflow** (manual trigger)
+GitHub repo → Actions tab → "Ultimate Bot — Daily" workflow → **Run workflow** (manual trigger).
 
-ดู log. ถ้าเขียวหมด → ดูใน chap LINE group ว่าข้อความมาถูกไหม
+Watch the log. If everything is green → check the chap LINE group to confirm the message looks right.
 
 ### 6. Done
 
-จาก step 5 ลงไป workflow จะรันเองทุกเช้า 9:00 น. ไทย (= 02:00 UTC)
+From step 5 onward the workflow runs every morning at 9:00 AM Bangkok time (= 02:00 UTC).
 
 ---
 
 ## Adjustments
 
-**เปลี่ยนเวลา push:**
-แก้ `cron` ใน `.github/workflows/daily.yml` (format: minute hour * * *, UTC)
+**Change the push time:**
+Edit `cron` in `.github/workflows/daily.yml` (format: `minute hour * * *`, UTC).
 
-**เปลี่ยนจำนวนบทความต่อรอบ:**
-แก้ `MAX_PER_RUN` ใน `run.py` (default = 1)
+**Change the number of articles per run:**
+Edit `MAX_PER_RUN` in `run.py` (default = 1).
 
-**เปลี่ยน voice:**
-- ตัว doctrine + values: แก้ `UltimateEngine.md` (bot อ่านจากไฟล์นี้ทุก run)
-- ตัว operational rules (ความยาว, format): แก้ `VOICE_INSTRUCTIONS` ใน `src/rewrite.py`
+**Change the voice:**
+- Doctrine + values: edit `UltimateEngine.md` (the bot reads this every run).
+- Operational rules (length, format): edit `VOICE_INSTRUCTIONS` in `src/rewrite.py`.
 
-**Reset state (ทดสอบใหม่):**
-แก้ `seen.json` ให้เป็น `[]` แล้ว commit push
+**Reset state (re-test from scratch):**
+Set `seen.json` to `[]` and commit/push.
 
 ---
 
 ## Cost
 
-- LINE Messaging API: ฟรี 500 messages/เดือน (Communication plan). 1 push/วัน × 30 = 30 messages/เดือน → ใต้ limit เยอะ
-- Gemini API: **ฟรี** (Google AI Studio free tier — 1,500 req/วัน). 1 push/วัน → ใช้ 0.07% ของ quota
-- GitHub Actions: ฟรี (public repo) หรือ 2000 min/เดือน (private). 1 run = ~30 วินาที × 30 วัน = 15 นาที/เดือน
+- LINE Messaging API: free 500 messages/month (Communication plan). 1 push/day × 30 = 30 messages/month → well under.
+- Gemini API: **free** (Google AI Studio free tier — 1,500 req/day). 1 push/day → uses 0.07% of quota.
+- GitHub Actions: free (public repo) or 2000 min/month (private). 1 run = ~30 seconds × 30 days = 15 minutes/month.
 
-**Total: $0/เดือน — Giver's Gain doctrine intact** 🎁
+**Total: $0/month — Giver's Gain doctrine intact** 🎁
 
 ---
 
