@@ -6,6 +6,8 @@ Voice derives from §2 Operating Philosophy + §10 Values, not approximated.
 Uses Gemini 2.5 Flash via Google AI Studio (free tier — 1500 req/day).
 """
 import os
+import sys
+import time
 from pathlib import Path
 
 from google import genai
@@ -13,6 +15,11 @@ from google.genai import types
 
 # Load UltimateEngine.md as authoritative source
 ENGINE_PATH = Path(__file__).parent.parent / "UltimateEngine.md"
+
+# Free-tier Gemini occasionally returns 503/429 during demand spikes; retry
+# transient failures so a single bad minute doesn't drop a scheduled run.
+MAX_GEMINI_ATTEMPTS = 3
+GEMINI_BACKOFF_BASE_S = 2  # waits: 2s, 4s between attempts
 
 
 def _load_engine() -> str:
@@ -22,6 +29,20 @@ def _load_engine() -> str:
             "this file is the source-of-truth, bot cannot run without it"
         )
     return ENGINE_PATH.read_text(encoding="utf-8")
+
+
+_TRANSIENT_TOKENS = (
+    "503", "429", "500", "502", "504",
+    "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED",
+)
+
+
+def _is_transient_gemini_error(exc: Exception) -> bool:
+    """5xx, 429, and known transient status codes are worth retrying."""
+    code = getattr(exc, "code", None)
+    if isinstance(code, int) and (code >= 500 or code == 429):
+        return True
+    return any(token in str(exc) for token in _TRANSIENT_TOKENS)
 
 
 VOICE_INSTRUCTIONS = """# Your role
@@ -91,16 +112,32 @@ Body:
 Rewrite this into a short LINE message for BNI Ultimate chapter members.
 Voice must follow UltimateEngine.md above. Output only the message text."""
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=user_msg,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            max_output_tokens=3000,
-            temperature=0.7,
-            thinking_config=types.ThinkingConfig(thinking_budget=0),
-        ),
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        max_output_tokens=3000,
+        temperature=0.7,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
+
+    response = None
+    for attempt in range(1, MAX_GEMINI_ATTEMPTS + 1):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=user_msg,
+                config=config,
+            )
+            break
+        except Exception as exc:
+            if attempt == MAX_GEMINI_ATTEMPTS or not _is_transient_gemini_error(exc):
+                raise
+            wait_s = GEMINI_BACKOFF_BASE_S * (2 ** (attempt - 1))
+            print(
+                f"[warn] gemini attempt {attempt}/{MAX_GEMINI_ATTEMPTS} failed "
+                f"({type(exc).__name__}: {str(exc)[:120]}); retry in {wait_s}s",
+                file=sys.stderr,
+            )
+            time.sleep(wait_s)
 
     # Surface truncation if it still happens — log finish_reason + usage
     finish_reason = None
