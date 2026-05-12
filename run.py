@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 
-from src.fetch import fetch_new_articles
+from src.fetch import fetch_fallback_article, fetch_new_articles
 from src.rewrite import rewrite_to_ultimate_voice
 from src.push import push_to_line_group
 
@@ -30,8 +30,22 @@ def main() -> int:
     print(f"[info] seen={len(seen)} articles tracked")
 
     articles = fetch_new_articles(seen=seen, limit=MAX_PER_RUN)
+
     if not articles:
-        print("[info] no new articles — exit clean")
+        # Fallback: push a random existing article so every cron run produces a
+        # visible LINE message. Lets us confirm schedule reliability without
+        # waiting on the source feed. Don't add to seen — it stays repostable.
+        fallback = fetch_fallback_article()
+        if not fallback:
+            print("[info] no articles in feed — exit clean")
+            return 0
+        print(f"[info] no new articles — reposting: {fallback['title']}")
+        try:
+            rewritten = rewrite_to_ultimate_voice(fallback)
+            push_to_line_group(rewritten, source_url=fallback["link"])
+            print(f"[ok] reposted: {fallback['title']}")
+        except Exception as e:
+            print(f"[err] fallback push failed: {e}", file=sys.stderr)
         return 0
 
     print(f"[info] fetched {len(articles)} new article(s)")
