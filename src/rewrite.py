@@ -16,10 +16,14 @@ from google.genai import types
 # Load UltimateEngine.md as authoritative source
 ENGINE_PATH = Path(__file__).parent.parent / "UltimateEngine.md"
 
-# Free-tier Gemini occasionally returns 503/429 during demand spikes; retry
-# transient failures so a single bad minute doesn't drop a scheduled run.
-MAX_GEMINI_ATTEMPTS = 3
-GEMINI_BACKOFF_BASE_S = 2  # waits: 2s, 4s between attempts
+# Free-tier Gemini occasionally returns 503/429 during demand spikes. Strategy:
+# retry the primary model (Flash) with backoff; if it stays down, fall back to
+# Pro once. Flash + Pro run on independent infra so simultaneous spikes are rare.
+PRIMARY_MODEL = "gemini-2.5-flash"   # 1500 req/day free
+FALLBACK_MODEL = "gemini-2.5-pro"    # 50 req/day free — emergency use only
+MAX_PRIMARY_ATTEMPTS = 3
+FALLBACK_ATTEMPTS = 1
+GEMINI_BACKOFF_BASE_S = 2  # primary waits: 2s, 4s between attempts
 
 
 def _load_engine() -> str:
@@ -43,6 +47,30 @@ def _is_transient_gemini_error(exc: Exception) -> bool:
     if isinstance(code, int) and (code >= 500 or code == 429):
         return True
     return any(token in str(exc) for token in _TRANSIENT_TOKENS)
+
+
+def _generate_with_retry(client, model: str, user_msg: str, config, max_attempts: int):
+    """Call generate_content with exponential backoff on transient errors.
+
+    Raises after the last attempt or immediately on non-transient errors.
+    """
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return client.models.generate_content(
+                model=model,
+                contents=user_msg,
+                config=config,
+            )
+        except Exception as exc:
+            if attempt == max_attempts or not _is_transient_gemini_error(exc):
+                raise
+            wait_s = GEMINI_BACKOFF_BASE_S * (2 ** (attempt - 1))
+            print(
+                f"[warn] {model} attempt {attempt}/{max_attempts} failed "
+                f"({type(exc).__name__}: {str(exc)[:120]}); retry in {wait_s}s",
+                file=sys.stderr,
+            )
+            time.sleep(wait_s)
 
 
 VOICE_INSTRUCTIONS = """# Your role
@@ -126,33 +154,31 @@ Voice must follow UltimateEngine.md above. Output only the message text."""
         thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
-    response = None
-    for attempt in range(1, MAX_GEMINI_ATTEMPTS + 1):
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=user_msg,
-                config=config,
-            )
-            break
-        except Exception as exc:
-            if attempt == MAX_GEMINI_ATTEMPTS or not _is_transient_gemini_error(exc):
-                raise
-            wait_s = GEMINI_BACKOFF_BASE_S * (2 ** (attempt - 1))
-            print(
-                f"[warn] gemini attempt {attempt}/{MAX_GEMINI_ATTEMPTS} failed "
-                f"({type(exc).__name__}: {str(exc)[:120]}); retry in {wait_s}s",
-                file=sys.stderr,
-            )
-            time.sleep(wait_s)
+    model_used = PRIMARY_MODEL
+    try:
+        response = _generate_with_retry(
+            client, PRIMARY_MODEL, user_msg, config, MAX_PRIMARY_ATTEMPTS,
+        )
+    except Exception as primary_exc:
+        if not _is_transient_gemini_error(primary_exc):
+            raise
+        print(
+            f"[info] {PRIMARY_MODEL} exhausted after {MAX_PRIMARY_ATTEMPTS} "
+            f"attempts — falling back to {FALLBACK_MODEL}",
+            file=sys.stderr,
+        )
+        model_used = FALLBACK_MODEL
+        response = _generate_with_retry(
+            client, FALLBACK_MODEL, user_msg, config, FALLBACK_ATTEMPTS,
+        )
 
     # Surface truncation if it still happens — log finish_reason + usage
     finish_reason = None
     if response.candidates:
         finish_reason = getattr(response.candidates[0], "finish_reason", None)
     if finish_reason and str(finish_reason) not in ("FinishReason.STOP", "STOP", "1"):
-        print(f"[warn] gemini finish_reason={finish_reason} (output may be truncated)")
+        print(f"[warn] {model_used} finish_reason={finish_reason} (output may be truncated)")
     if hasattr(response, "usage_metadata") and response.usage_metadata:
-        print(f"[info] gemini usage: {response.usage_metadata}")
+        print(f"[info] {model_used} usage: {response.usage_metadata}")
 
     return response.text.strip()
