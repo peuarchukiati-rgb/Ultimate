@@ -18,9 +18,13 @@ ENGINE_PATH = Path(__file__).parent.parent / "UltimateEngine.md"
 
 # Free-tier Gemini occasionally returns 503/429 during demand spikes. Strategy:
 # retry the primary model (Flash) with backoff; if it stays down, fall back to
-# Pro once. Flash + Pro run on independent infra so simultaneous spikes are rare.
-PRIMARY_MODEL = "gemini-2.5-flash"   # 1500 req/day free
-FALLBACK_MODEL = "gemini-2.5-pro"    # 50 req/day free — emergency use only
+# Flash-Lite once. Flash and Flash-Lite share infra but use separate per-model
+# quota pools, so when Flash trips a per-minute rate limit or token cap,
+# Flash-Lite is usually still available. (Pro was the original fallback choice
+# but Google moved Pro's free tier to 0 req/day in 2026, so it's no longer a
+# viable free emergency model — see 2026-05-13 12:00 BKK incident.)
+PRIMARY_MODEL = "gemini-2.5-flash"        # 1500 req/day free
+FALLBACK_MODEL = "gemini-2.5-flash-lite"  # 1500 req/day free, separate quota pool
 MAX_PRIMARY_ATTEMPTS = 3
 FALLBACK_ATTEMPTS = 1
 GEMINI_BACKOFF_BASE_S = 2  # primary waits: 2s, 4s between attempts
