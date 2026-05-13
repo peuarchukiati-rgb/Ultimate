@@ -60,25 +60,32 @@ def _fetch_all_entries() -> list:
 
 def fetch_new_articles(seen: set[str], limit: int = 1) -> list[dict]:
     """
-    Random pick across all configured feeds. Returns up-to-limit articles
-    not in seen set.
+    Pick a random source first, then return its first unseen entry. This
+    balances source rotation even when one feed has a large backlog of
+    already-seen entries (and another has tons of unseen). With a flat
+    "shuffle everything" approach, a backlog-heavy feed dominates output.
     """
-    entries = _fetch_all_entries()
-    if not entries:
-        return []
-
-    random.shuffle(entries)
+    feeds = FEEDS.copy()
+    random.shuffle(feeds)
 
     new = []
-    for entry in entries:
-        guid = entry.get("id") or entry.get("link")
-        if not guid or guid in seen:
-            continue
-        article = _entry_to_article(entry)
-        if article:
-            new.append(article)
+    for feed_url in feeds:
         if len(new) >= limit:
             break
+        feed = feedparser.parse(feed_url)
+        if not feed.entries:
+            if feed.bozo:
+                print(f"[warn] feed parse failed for {feed_url}: {feed.bozo_exception}")
+            continue
+        for entry in feed.entries:
+            guid = entry.get("id") or entry.get("link")
+            if not guid or guid in seen:
+                continue
+            article = _entry_to_article(entry)
+            if article:
+                new.append(article)
+            if len(new) >= limit:
+                break
     return new
 
 
