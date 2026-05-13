@@ -54,6 +54,38 @@ gh workflow run daily.yml --repo peuarchukiati-rgb/Ultimate
 gh run watch --repo peuarchukiati-rgb/Ultimate
 ```
 
+## Stats (`stats.jsonl`)
+
+Every cron run appends one JSON line to `stats.jsonl` (committed alongside `seen.json`). Schema:
+
+```json
+{"ts":"2026-05-13T04:00:00Z","outcome":"ok","mode":"new","source":"fs.blog","title":"...","guid":"...","model":"gemini-2.5-flash","primary_attempts":1,"used_fallback_model":false}
+```
+
+Fields: `outcome` ∈ {ok, err, noop}, `mode` ∈ {new, fallback, empty_feed}, `model` ∈ {gemini-2.5-flash, gemini-2.5-pro}.
+
+Query without leaving the terminal — no Supabase, no Actions log scraping:
+
+```bash
+# How many runs used Pro fallback?
+jq -r 'select(.used_fallback_model)' stats.jsonl | wc -l
+
+# Source distribution over last 24 runs
+tail -24 stats.jsonl | jq -r .source | sort | uniq -c
+
+# Show all error runs
+jq -r 'select(.outcome=="err") | "\(.ts) \(.error)"' stats.jsonl
+
+# Success rate
+echo "$(jq -r 'select(.outcome=="ok")' stats.jsonl | wc -l) / $(wc -l < stats.jsonl)"
+```
+
+Want SQL? Pipe into sqlite:
+```bash
+sqlite-utils insert stats.db runs stats.jsonl --nl  # one-time
+sqlite-utils stats.db "SELECT model, COUNT(*) FROM runs GROUP BY model"
+```
+
 ## Common pitfalls
 
 - **"Cron isn't firing"** — check cron-job.org execution history first, not GitHub. GitHub only sees what cron-job.org dispatches.

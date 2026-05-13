@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # needed to commit seen.json back
+  contents: write  # needed to commit seen.json + stats.jsonl back
 
 jobs:
   push:
@@ -32,10 +32,10 @@ jobs:
           LINE_CHAP_GROUP_ID: ${{ secrets.LINE_CHAP_GROUP_ID }}
         run: python run.py
 
-      - name: Commit seen.json
+      - name: Commit state files
         run: |
           git config user.name "ultimate-bot"
           git config user.email "bot@bni-ultimate.local"
-          git add seen.json || true
-          git diff --cached --quiet || git commit -m "chore: update seen articles [skip ci]"
+          git add seen.json stats.jsonl || true
+          git diff --cached --quiet || git commit -m "chore: update bot state [skip ci]"
           git push || true

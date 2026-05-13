@@ -52,15 +52,17 @@ def _is_transient_gemini_error(exc: Exception) -> bool:
 def _generate_with_retry(client, model: str, user_msg: str, config, max_attempts: int):
     """Call generate_content with exponential backoff on transient errors.
 
-    Raises after the last attempt or immediately on non-transient errors.
+    Returns (response, attempts_used). Raises after the last attempt or
+    immediately on non-transient errors.
     """
     for attempt in range(1, max_attempts + 1):
         try:
-            return client.models.generate_content(
+            response = client.models.generate_content(
                 model=model,
                 contents=user_msg,
                 config=config,
             )
+            return response, attempt
         except Exception as exc:
             if attempt == max_attempts or not _is_transient_gemini_error(exc):
                 raise
@@ -145,10 +147,16 @@ Output:
 หาลูกค้าใหม่แพงกว่ารักษาลูกค้าเก่า 5 เท่า. แต่ส่วนใหญ่ใช้เวลา 80% ไปกับการหา. ของยากของ retention คือลูกค้าเก่าหายเงียบ — ไม่มี exit interview, แค่ไม่กลับมา. ใครในลิสต์ของเราที่เริ่มเงียบลงแล้วบ้าง."""
 
 
-def rewrite_to_ultimate_voice(article: dict) -> str:
+def rewrite_to_ultimate_voice(article: dict) -> tuple[str, dict]:
     """
     Given an RSS article dict (title, summary, content),
-    return the rewritten Ultimate-voice message text.
+    return (rewritten_text, metadata).
+
+    metadata: {
+        "model": str,                  # which model produced the text
+        "primary_attempts": int,        # how many Flash attempts before success or fallback
+        "used_fallback_model": bool,    # True if Pro produced the output
+    }
 
     System prompt = UltimateEngine.md (source-of-truth) + voice instructions.
     """
@@ -183,20 +191,23 @@ Voice must follow UltimateEngine.md above. Output only the message text."""
     )
 
     model_used = PRIMARY_MODEL
+    used_fallback_model = False
     try:
-        response = _generate_with_retry(
+        response, primary_attempts = _generate_with_retry(
             client, PRIMARY_MODEL, user_msg, config, MAX_PRIMARY_ATTEMPTS,
         )
     except Exception as primary_exc:
         if not _is_transient_gemini_error(primary_exc):
             raise
+        primary_attempts = MAX_PRIMARY_ATTEMPTS
         print(
             f"[info] {PRIMARY_MODEL} exhausted after {MAX_PRIMARY_ATTEMPTS} "
             f"attempts — falling back to {FALLBACK_MODEL}",
             file=sys.stderr,
         )
         model_used = FALLBACK_MODEL
-        response = _generate_with_retry(
+        used_fallback_model = True
+        response, _ = _generate_with_retry(
             client, FALLBACK_MODEL, user_msg, config, FALLBACK_ATTEMPTS,
         )
 
@@ -209,4 +220,9 @@ Voice must follow UltimateEngine.md above. Output only the message text."""
     if hasattr(response, "usage_metadata") and response.usage_metadata:
         print(f"[info] {model_used} usage: {response.usage_metadata}")
 
-    return response.text.strip()
+    meta = {
+        "model": model_used,
+        "primary_attempts": primary_attempts,
+        "used_fallback_model": used_fallback_model,
+    }
+    return response.text.strip(), meta
