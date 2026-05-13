@@ -62,7 +62,7 @@ Every cron run appends one JSON line to `stats.jsonl` (committed alongside `seen
 {"ts":"2026-05-13T04:00:00Z","outcome":"ok","mode":"new","source":"fs.blog","title":"...","guid":"...","model":"gemini-2.5-flash","primary_attempts":1,"used_fallback_model":false}
 ```
 
-Fields: `outcome` ∈ {ok, err, noop}, `mode` ∈ {new, fallback, empty_feed}, `model` ∈ {gemini-2.5-flash, gemini-2.5-pro}.
+Fields: `outcome` ∈ {ok, err, noop}, `mode` ∈ {new, fallback, empty_feed}, `model` ∈ {gemini-2.5-flash, gemini-2.5-flash-lite}.
 
 Query without leaving the terminal — no Supabase, no Actions log scraping:
 
