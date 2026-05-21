@@ -1,14 +1,30 @@
 # Ultimate Bot
 
-Daily BNI Global content → rewritten in Ultimate voice → pushed to the chap LINE group.
+Public business-insight RSS feeds → rewritten in Ultimate voice → pushed to the chap LINE group.
 
-Runs automatically every day at 9:00 AM Bangkok time via GitHub Actions.
+Runs from an external cron trigger into GitHub Actions; see `CLAUDE.md` for the current scheduling note.
+
+## Why this matters
+
+This is a proof-of-work repo for **Markdown as operating protocol**.
+
+`UltimateEngine.md` is not a note. It is the bot's voice, doctrine, and behavioral source of truth. Edit the `.md`, and the automation changes how it thinks and writes.
+
+```text
+Public RSS source
+→ UltimateEngine.md doctrine
+→ Gemini rewrite
+→ LINE dispatch
+→ seen.json state tracking
+```
+
+**What it proves:** a living `.md` file can control recurring automated output without turning the workflow into a custom app.
 
 ---
 
 ## What it does
 
-1. Pulls the RSS feed from `bni.com/feed/` (the official BNI Global blog)
+1. Pulls the configured RSS feeds from `src/fetch.py` (currently Seth Godin, James Clear, and Farnam Street)
 2. Finds new articles that haven't been pushed yet (tracked in `seen.json`)
 3. Sends them to Gemini 2.5 Flash for rewriting — using **`UltimateEngine.md` as the source-of-truth** (the chapter's operating doc). The voice comes out as the chapter's own, not generic.
 4. Pushes to the chap LINE group via the Messaging API
