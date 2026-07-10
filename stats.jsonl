@@ -15,3 +15,4 @@
 {"ts": "2026-06-30T02:00:59Z", "outcome": "err", "mode": "new", "source": "seths.blog", "title": "Backlist confusion", "guid": "https://seths.blog/?p=56096", "error": "LINE push failed [400]: {\"message\":\"Failed to send messages\"}"}
 {"ts": "2026-07-03T08:00:49Z", "outcome": "err", "mode": "new", "source": "seths.blog", "title": "Left unsaid", "guid": "https://seths.blog/?p=52213", "error": "LINE push failed [400]: {\"message\":\"Failed to send messages\"}"}
 {"ts": "2026-07-07T02:01:04Z", "outcome": "err", "mode": "new", "source": "seths.blog", "title": "Facts and feelings", "guid": "https://seths.blog/?p=52308", "error": "LINE push failed [400]: {\"message\":\"Failed to send messages\"}"}
+{"ts": "2026-07-10T08:00:52Z", "outcome": "err", "mode": "new", "source": "seths.blog", "title": "Generous collusion", "guid": "https://seths.blog/?p=56215", "error": "LINE push failed [400]: {\"message\":\"Failed to send messages\"}"}
